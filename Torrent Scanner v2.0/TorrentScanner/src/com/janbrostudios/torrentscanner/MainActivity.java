@@ -49,7 +49,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
     public static final String googleApiKey = "AIzaSyBhXcNgl1iWWa68HYzW0-IxROWidJCfYGQ";
 	final Context context = this;
 	private static ArrayList<String> productList = new ArrayList<String>();
-	IntentIntegrator intent = new IntentIntegrator();
+	IntentIntegrator intent = new IntentIntegrator(this);
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,11 +102,13 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	    // Handle item selection
 	    switch (item.getItemId()) {
 	        case R.id.action_scan:
-	        	intent.initiateScan(this);
-	            return true;
+	        	try{
+	        		intent.initiateScan();
+	        		return true;
+	        	}catch(Exception e){}
 	        case R.id.action_clear:
 	            productList.clear();
-	            showText("");
+	            showText(getProduct("9780805072549"));
 	            return true;
 	        case R.id.action_exit:
 	        	productList.clear();
@@ -116,43 +118,77 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	    }
 	}
     
+    static String getProduct(String upc) {
+		String category="none";
+		String productTitle=null;
+		if(upc.startsWith("978")||upc.startsWith("979")){
+			category="books";
+			if(NetworkInterfacing.searchBookTitle(upc)!=null){
+				try {
+					productTitle = NetworkInterfacing.searchBookTitle(upc);
+				  } catch (Exception ex) {
+					  ex.printStackTrace();
+				  }
+			}
+		}
+		if(productTitle==null)
+			productTitle = NetworkInterfacing.searchProductTitle(upc);
+
+		if(productTitle==null){
+			return "Product not found!";
+		}
+		else{
+			return "Product:"+productTitle+"\nKatLinks:"+getProductInfo(getProductLinks(productTitle,category),1,productTitle);
+		}
+	}
+    
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     	switch(requestCode) {
 		case IntentIntegrator.REQUEST_CODE: {
 			if (resultCode != RESULT_CANCELED) {
 				IntentResult scanResult;
 				try{
-					scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-				}finally{}
+					scanResult = intent.parseActivityResult(requestCode, resultCode, data);
+				}catch(Exception e){return;}
 				if (scanResult != null) {
 					String category="none";
-					String upc = scanResult.getContents();
+					String upc=null;
+					try{
+						scanResult.getContents();
+					}catch(Exception e){
+						Log.d("Error", "Failed to retrieve content.");
+					}
 					String productTitle=null;
 					//Debugging Purposes
 					//isbn = "9780805072549";
-					//upc = "710425491016";
+					upc = "9780805072549";//710425491016";
 					if(upc.startsWith("978")||upc.startsWith("979")){
 						category="books";
-						if(NetworkInterfacing.searchBookTitle(upc)!=null){
 							try {
 								productTitle = NetworkInterfacing.searchBookTitle(upc);
 							  } catch (Exception ex) {
 								  ex.printStackTrace();
+								  return;
 							  }
+						
+					}
+					if(productTitle==null){
+						try{
+							productTitle = NetworkInterfacing.searchProductTitle(upc);
+						}catch(Exception e){
+							return;
 						}
 					}
-					if(productTitle==null)
-						productTitle = NetworkInterfacing.searchProductTitle(upc);
 
 					if(productTitle==null){
 						Toast toast = Toast.makeText(context, "Product not found!", Toast.LENGTH_SHORT);
 						toast.show();
 					}
 					else{
-						Log.d("DEBUG",productTitle);
-						Log.d("DEBUG", upc);
+						//Log.d("DEBUG",productTitle);
+						//Log.d("DEBUG", upc);
 						if(productTitle.contains(upc)){
-							Log.d("DEBUG","Inside");
+							//Log.d("DEBUG","Inside");
 							productTitle = productTitle.replace(upc, "");
 						}
 						verifyProduct(productTitle,category);
@@ -248,13 +284,13 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
             return rootView;
         }
     }
-    private ArrayList<Element> getProductLinks(String productTitle,String category){
+    private static ArrayList<Element> getProductLinks(String productTitle,String category){
 		ArrayList<Element> katLinks = NetworkInterfacing.getKATInfo(productTitle,category);
 		
 		return katLinks;
 	}
 	
-	private String getProductInfo(ArrayList<Element> katLinks,int numLinks,String productTitle){
+	private static String getProductInfo(ArrayList<Element> katLinks,int numLinks,String productTitle){
 		if(katLinks==null)
 			return "1: "+productTitle+"\nNo torrent found.\n\n";
 		ArrayList<String> elementNames = new ArrayList<String>();
@@ -331,7 +367,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 						productList.add(productTitle);
 						// TODO Auto-generated method stub
 						dialog.cancel();
-						IntentIntegrator.initiateScan(MainActivity.this);
+						intent.initiateScan();
 					}
 						
 				})
@@ -340,7 +376,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 						// if this button is clicked, just close
 						// the dialog box and do nothing
 						productList.clear();
-						IntentIntegrator.initiateScan(MainActivity.this);
+						intent.initiateScan();
 					}
 				});
  

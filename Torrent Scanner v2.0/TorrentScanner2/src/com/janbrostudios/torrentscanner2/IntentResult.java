@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.janbrostudios.torrentscanner;
+package com.janbrostudios.torrentscanner2;
 
 /**
  * <p>Encapsulates the result of a barcode scan invoked through {@link IntentIntegrator}.</p>

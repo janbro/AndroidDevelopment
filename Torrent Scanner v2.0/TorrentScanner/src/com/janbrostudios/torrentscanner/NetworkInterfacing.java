@@ -3,14 +3,17 @@ package com.janbrostudios.torrentscanner;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.json.simple.*;
 import org.jsoup.nodes.Element;
+
 import java.util.ArrayList;
 
 public class NetworkInterfacing {
@@ -43,7 +46,8 @@ public class NetworkInterfacing {
 		JSONObject bookJSON = null;
 		try {
 			bookJSON = getBookJSON(isbn);
-		} catch (IOException e) {
+		}
+		catch(IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -124,9 +128,20 @@ public class NetworkInterfacing {
 		String url = "https://www.googleapis.com/books/v1/volumes?q=isbn:"+barcode+"&key="+googleApiKey;
 		
 		URL requestURL = new URL(url);
-		URLConnection connection = requestURL.openConnection();
+		URLConnection connection=null;
+		BufferedReader in =null;
 		
-		BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		try{
+			connection = requestURL.openConnection();
+		}catch(Exception e){
+			try{
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			}catch(Exception f){
+				e.printStackTrace();
+			}
+		}
+		
+		
 
 		String input;
 		String result="";
@@ -139,11 +154,24 @@ public class NetworkInterfacing {
 		return (JSONObject)JSONValue.parse(result);
 	}
 	
-	private static Document getKATHTML(String search, String category) throws IOException{
-		String requestUrl = "http://kickass.to/usearch/"+URLEncoder.encode(search,"UTF-8")+"%20category%3A"+category+"/?field=seeders&sorder=desc";
-		URL katRequest = new URL(requestUrl);
-
-		Document doc = Jsoup.parse(katRequest, 5000);
+	private static Document getKATHTML(String search, String category) throws UnsupportedEncodingException {
+		String requestUrl = "http://kickass.to/usearch/"+URLEncoder.encode(search,"UTF-8").replace("+", "%20")+"%20category%3A"+category+"/?field=seeders&sorder=desc";
+		URL katRequest=null;
+		try{
+			katRequest = new URL(requestUrl);
+		}catch(IOException e){
+			
+		}
+		Document doc = null;
+		try {
+			doc = Jsoup.parse(katRequest, 5000);
+		} catch (org.jsoup.HttpStatusException e) {
+			// TODO Auto-generated catch block
+			return null;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			return null;
+		}
 
 		return doc;
 	}

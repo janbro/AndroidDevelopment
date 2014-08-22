@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Torrent Scanner</string>
+    <string name="scan_button">Scan</string>
+    <string name="torrent_content">Torrent Scanner</string>
+
+</resources>

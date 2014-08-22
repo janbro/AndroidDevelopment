@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.janbrostudios.torrentscanner;
+package com.janbrostudios.torrentscanner2;
 
 import java.util.Arrays;
 import java.util.Collection;
